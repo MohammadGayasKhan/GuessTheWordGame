@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WordGuesserGame</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+</head>
+<body>
+    <div class="container text-center mt-5 pt-10">
+        
+        <div class="mt-5 pt-5">
+            <h1 class="display-4 fw-bold mb-4 text-primary"><i>Word Guesser</i></h1>
+        </div>
+        <div class="container m-3">
+            <div class="row">
+            <div class="col-sm-6 mb-3 mb-sm-0">
+                <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Admin User</h5>
+                    <p class="card-text">Generate and view reports.</p>
+                    <a href="{% url 'adminUser:login' %}" class="btn btn-secondary">Start as an Admin</a>
+                </div>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Player</h5>
+                    <p class="card-text">Start playing the game.</p>
+                    <a href="{% url 'playerUser:login' %}" class="btn btn-primary">Login as a Player</a>
+                </div>
+                </div>
+            </div>
+        </div>
+</body>
+</html>
