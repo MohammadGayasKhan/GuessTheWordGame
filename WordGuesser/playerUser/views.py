@@ -23,7 +23,7 @@ words = ["APPLE", "BREAD", "CHAIR", "TABLE", "WATER", "HOUSE", "PLANT", "MUSIC",
 
 rules = [
         'When the game starts, submit a <span class="text-uppercase fw-bold">5-letter word</span> (uppercase only). You have <span class="fw-bold">5 guesses</span> maximum.',
-        '<span class="badge bg-success">Green</span> = Letter is correct and in the right position.<br><span class="badge bg-warning text-dark">Orange</span> = Letter is correct but in the wrong position.<br><span class="badge bg-secondary">Grey</span> = Letter is not in the word.',
+        '<span class="badge bg-success">Green</span> = Letter is correct and in the right position.<br><span class="badge" style="background-color: #e36110; color: white;">Orange</span> = Letter is correct but in the wrong position.<br><span class="badge bg-secondary">Grey</span> = Letter is not in the word.',
         'If you guess the word correctly, <span class="text-success fw-bold">you win!</span> A congratulatory message will appear. Click OK to stop the game.',
         'If you use all 5 guesses and don\'t guess the word, <span class="text-danger fw-bold">better luck next time!</span> Click OK to stop the game.',
         'If your guess is incorrect, you can try again. Previous guesses are shown in order.'
@@ -31,7 +31,6 @@ rules = [
 
 @login_required
 def home(request):
-    # Clear any existing game state when returning to home
     return render(request, 'playerUser/home.html',{'rules':rules})
 
 @csrf_protect
@@ -103,7 +102,6 @@ def dummy(request):
 def game(request):
     if 'game_id' not in request.session:
         request.session['game_id'] = str(uuid.uuid4().hex)
-    # Initialize game state if not exists
     if 'attemptsLeft' not in request.session:
         request.session['attemptsLeft'] = 5
         request.session['guesses'] = []
@@ -112,14 +110,11 @@ def game(request):
     if 'target' not in request.session:
         request.session['target'] = next(db.words.aggregate([{ "$sample": { "size": 1 } }]))['word']
         print("Target word is:", request.session['target'])
-    # Check if game is already lost
     if request.session['attemptsLeft'] <= 0:
         request.session['lost'] = True
 
-    # Generate grid data
     grid = []
     guesses = request.session.get('guesses', [])
-    # Add rows for made guesses
     for guess in guesses:
         row = []
         for i, char in enumerate(guess):
@@ -132,16 +127,14 @@ def game(request):
             row.append({'char': char, 'status': status})
         grid.append(row)
     
-    # Calculate remaining choices
-    choices_left = 5 - len(guesses)  # 5 is max attempts
+    choices_left = 5 - len(guesses)   
 
     if request.method == 'POST' and not request.session['lost']:
         guess = request.POST.get('guessInput', '').upper()
         if guess and len(guess) == 5:
-            if guess not in request.session['guesses']:  # Only add if it's a new guess
+            if guess not in request.session['guesses']:   
                 current_time = datetime.now()
                 
-                # Log the guess in the database
                 db.playerLogs.insert_one({
                     "username": request.session['username'],
                     "date": current_time.strftime("%Y-%m-%d"),
@@ -154,13 +147,11 @@ def game(request):
                 request.session['guesses'].append(guess)
                 request.session['attemptsLeft'] -= 1
                 
-                # Check if lost after this guess
                 if request.session['attemptsLeft'] <= 0:
                     request.session['lost'] = True
                 
-                request.session.modified = True  # Ensure session is saved
+                request.session.modified = True  
 
-                # Update grid with the new guess
                 row = []
                 for i, char in enumerate(guess):
                     if char == request.session['target'][i]:
@@ -190,11 +181,9 @@ def game(request):
     
 @login_required
 def restart(request):
-    # Clear all game state variables
     current_date = datetime.now().strftime("%Y-%m-%d")
     username = request.session.get('username')
     
-    # Count unique sessions for this user today
     games = db.playerLogs.distinct(
         "gameid",
         {"username": username, "date": current_date}
@@ -202,14 +191,10 @@ def restart(request):
     game_count = len(games)
     print("Game count for user", username, "on", current_date, "is", game_count)
     
-    # Restrict to 3 games per day
     if game_count >= 3:
         request.session['error_message'] = "You have reached the maximum of 3 games for today. Please try again tomorrow."
         return redirect('playerUser:game')
 
-    
-    
-    # Clear game state
     game_vars = ['attemptsLeft', 'guesses', 'lost', 'won', 'target', 'gameid']
     for var in game_vars:
         if var in request.session:

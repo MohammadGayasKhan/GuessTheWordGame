@@ -15,10 +15,6 @@ def login_required(view_func):
         return view_func(request, *args, **kwargs)
     return wrapped
 
-# Create your views here.
-# @login_required
-# def home(request):
-#     return render(request, 'adminUser/home.html')
 
 @csrf_protect
 def login(request):
@@ -93,7 +89,6 @@ def report(request):
             if report_type == 'daily':
                 date = request.POST.get('date')
                 if date:
-                    # Get daily statistics
                     daily_logs = list(db.playerLogs.find({"date": date}))
                     unique_users = len(set(log['username'] for log in daily_logs))
                     correct_guesses = sum(1 for log in daily_logs if log['guessedword'] == log['actualword'])
@@ -108,39 +103,74 @@ def report(request):
             elif report_type == 'user':
                 username = request.POST.get('username')
                 if username:
-                    # Get user statistics
-                    user_logs = list(db.playerLogs.find({"username": username}))
-                    
-                    # Group by date
-                    user_stats = {}
-                    for log in user_logs:
-                        date = log['date']
-                        if date not in user_stats:
-                            user_stats[date] = {
-                                'words_tried': 0,
-                                'correct_guesses': 0
-                            }
+                    if username == 'all':
+                        # Get all users' logs
+                        all_logs = list(db.playerLogs.find({}))
+                        all_user_stats = {}
                         
-                        user_stats[date]['words_tried'] += 1
-                        if log['guessedword'] == log['actualword']:
-                            user_stats[date]['correct_guesses'] += 1
-                    
-                    # Convert to list and sort by date
-                    user_report = []
-                    for date, stats in user_stats.items():
-                        user_report.append({
-                            'date': date,
-                            'words_tried': stats['words_tried'],
-                            'correct_guesses': stats['correct_guesses']
-                        })
-                    
-                    user_report.sort(key=lambda x: x['date'], reverse=True)
-                    context['user_report'] = {
-                        'username': username,
-                        'daily_stats': user_report
-                    }
+                        for log in all_logs:
+                            username = log['username']
+                            if username not in all_user_stats:
+                                all_user_stats[username] = {
+                                    'total_words': 0,
+                                    'total_correct': 0,
+                                    'dates_played': set(),
+                                    'success_rate': 0
+                                }
+                            
+                            all_user_stats[username]['total_words'] += 1
+                            all_user_stats[username]['dates_played'].add(log['date'])
+                            if log['guessedword'] == log['actualword']:
+                                all_user_stats[username]['total_correct'] += 1
+                        
+                        # Calculate success rates and prepare report
+                        user_report = []
+                        for username, stats in all_user_stats.items():
+                            user_report.append({
+                                'username': username,
+                                'total_words': stats['total_words'],
+                                'total_correct': stats['total_correct'],
+                                'days_played': len(stats['dates_played']),
+                                'dates_played': sorted(list(stats['dates_played']), reverse=True)  # Sort dates in descending order
+                            })
+                        
+                        # Sort by total words played (descending)
+                        user_report.sort(key=lambda x: x['total_words'], reverse=True)
+                        context['user_report'] = {
+                            'username': 'all',
+                            'all_users_stats': user_report
+                        }
+                    else:
+                        # Individual user report
+                        user_logs = list(db.playerLogs.find({"username": username}))
+                        
+                        user_stats = {}
+                        for log in user_logs:
+                            date = log['date']
+                            if date not in user_stats:
+                                user_stats[date] = {
+                                    'words_tried': 0,
+                                    'correct_guesses': 0
+                                }
+                            
+                            user_stats[date]['words_tried'] += 1
+                            if log['guessedword'] == log['actualword']:
+                                user_stats[date]['correct_guesses'] += 1
+                        
+                        user_report = []
+                        for date, stats in user_stats.items():
+                            user_report.append({
+                                'date': date,
+                                'words_tried': stats['words_tried'],
+                                'correct_guesses': stats['correct_guesses']
+                            })
+                        
+                        user_report.sort(key=lambda x: x['date'], reverse=True)
+                        context['user_report'] = {
+                            'username': username,
+                            'daily_stats': user_report
+                        }
         
-        # Get list of all usernames for the dropdown
         all_users = sorted(list(set(u['username'] for u in db.players.find({}, {'username': 1}))))
         context['all_users'] = all_users
         

@@ -63,7 +63,6 @@
                 </div>
             </div>
 
-            <!-- User Report Form -->
             <div class="col-md-6">
                 <div class="card shadow-sm">
                     <div class="card-header bg-success text-white">
@@ -77,6 +76,7 @@
                                 <label for="username" class="form-label">Select User</label>
                                 <select class="form-select" id="username" name="username" required>
                                     <option value="">Choose a user...</option>
+                                    <option value="all">All Users</option>
                                     {% for username in all_users %}
                                     <option value="{{ username }}">{{ username }}</option>
                                     {% endfor %}
@@ -87,8 +87,42 @@
 
                         {% if user_report %}
                         <div class="mt-4">
-                            <h5>Results for {{ user_report.username }}</h5>
+                            <h5>Results for {% if user_report.username == 'all' %}All Users{% else %}{{ user_report.username }}{% endif %}</h5>
                             <div class="table-responsive">
+                                {% if user_report.username == 'all' %}
+                                <table class="table table-striped table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Username</th>
+                                            <th class="text-center">Total Words</th>
+                                            <th class="text-center">Correct</th>
+                                            <th class="text-center">Dates Played</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for stat in user_report.all_users_stats %}
+                                        <tr>
+                                            <td>{{ stat.username }}</td>
+                                            <td class="text-center">{{ stat.total_words }}</td>
+                                            <td class="text-center">{{ stat.total_correct }}</td>
+                                            <td>
+                                                <div class="small" style="max-height: 100px; overflow-y: auto;">
+                                                    <ul>
+                                                        {% for date in stat.dates_played %}
+                                                        <li class="mb-1">{{ date }}</li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="5" class="text-center">No data available</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                                {% else %}
                                 <table class="table table-striped table-hover">
                                     <thead>
                                         <tr>
@@ -106,9 +140,10 @@
                                         </tr>
                                         {% empty %}
                                         <tr>
-                                            <td colspan="4" class="text-center">No data available for this user</td>
+                                            <td colspan="3" class="text-center">No data available for this user</td>
                                         </tr>
                                         {% endfor %}
+                                {% endif %}
                                     </tbody>
                                 </table>
                             </div>

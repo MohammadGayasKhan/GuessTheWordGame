@@ -36,7 +36,7 @@
                                         {% if cell.status == 'correct' %}
                                             <div class="game-cell btn btn-success border-dark m-2">{{ cell.char }}</div>
                                         {% elif cell.status == 'wrong_position' %}
-                                            <div class="game-cell btn btn-warning border-dark m-2">{{ cell.char }}</div>
+                                            <div class="game-cell btn border-dark m-2" style="background-color: #e36110; color: white;">{{ cell.char }}</div>
                                         {% else %}
                                             <div class="game-cell btn btn-secondary border-dark m-2">{{ cell.char }}</div>
                                         {% endif %}
